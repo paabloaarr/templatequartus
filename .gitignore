@@ -3,7 +3,8 @@ db/
 incremental_db/
 output_files/
 work/
-simulation/
+/simulation/
+
 
 # Preferencias locales de Quartus
 *.qws
