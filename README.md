@@ -144,6 +144,268 @@ Se excluyen las bases de datos de compilación, los resultados generados y las p
 
 Cuando añadas IP o Platform Designer, incluye las configuraciones y dependencias necesarias para regenerar y compilar el diseño.
 
+## Comandos útiles de Quartus
+
+Los ejemplos utilizan el proyecto `templatequartus.qpf`. Si lo renombras, sustituye `templatequartus` en los comandos.
+
+Ejecuta los comandos desde la carpeta que contiene el `.qpf`.
+
+### Terminal de PowerShell y consola Tcl
+
+Hay dos tipos de comandos:
+
+- **PowerShell:** ejecuta programas como `quartus_sh.exe`.
+- **Consola Tcl de Quartus:** permite consultar y modificar el proyecto. Se reconoce por el indicador `tcl>`.
+
+Para entrar en la consola Tcl, ejecuta desde PowerShell:
+
+```powershell
+quartus_sh.exe -s
+```
+
+Después abre el proyecto:
+
+```tcl
+project_open templatequartus
+```
+
+Los siguientes comandos de configuración requieren que el proyecto esté abierto. Ejecuta únicamente los ejemplos que necesites.
+
+### Añadir archivos al proyecto
+
+Añadir un archivo SystemVerilog:
+
+```tcl
+set_global_assignment -name SYSTEMVERILOG_FILE top.sv
+```
+
+Añadir un archivo situado en una subcarpeta:
+
+```tcl
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/contador.sv
+```
+
+Añadir un archivo Verilog:
+
+```tcl
+set_global_assignment -name VERILOG_FILE rtl/modulo.v
+```
+
+Añadir un archivo de restricciones temporales:
+
+```tcl
+set_global_assignment -name SDC_FILE constraints/reloj.sdc
+```
+
+Estos comandos registran archivos existentes; no crean su contenido ni sus carpetas.
+
+Utiliza rutas relativas y `/` como separador. Si la ruta contiene espacios, enciérrala entre llaves:
+
+```tcl
+set_global_assignment -name SYSTEMVERILOG_FILE {rtl/mis modulos/contador.sv}
+```
+
+Guarda los cambios:
+
+```tcl
+export_assignments
+```
+
+### Quitar archivos del proyecto
+
+Para quitar un archivo concreto, utiliza `set_global_assignment` con la opción `-remove`:
+
+```tcl
+set_global_assignment -remove -name SYSTEMVERILOG_FILE rtl/contador.sv
+```
+
+Para quitar un archivo de restricciones:
+
+```tcl
+set_global_assignment -remove -name SDC_FILE constraints/reloj.sdc
+```
+
+Usa exactamente la ruta registrada en el `.qsf`.
+
+Esto elimina la referencia del proyecto, pero **no borra el archivo del ordenador**.
+
+Guarda después:
+
+```tcl
+export_assignments
+```
+
+### Consultar los archivos SystemVerilog incluidos
+
+```tcl
+foreach_in_collection asignacion [get_all_global_assignments -name SYSTEMVERILOG_FILE] {
+    puts [lindex $asignacion 2]
+}
+```
+
+Muestra las entradas SystemVerilog registradas directamente en el proyecto; no es una lista completa de dependencias internas de IP o archivos incluidos mediante otros mecanismos.
+
+### Consultar y cambiar el módulo principal
+
+Consultar el top-level:
+
+```tcl
+get_global_assignment -name TOP_LEVEL_ENTITY
+```
+
+Cambiarlo:
+
+```tcl
+set_global_assignment -name TOP_LEVEL_ENTITY top
+export_assignments
+```
+
+`top` debe coincidir con el nombre declarado en el código:
+
+```systemverilog
+module top (
+    input  logic a,
+    output logic y
+);
+    assign y = a;
+endmodule
+```
+
+### Consultar la FPGA configurada
+
+Consultar la familia:
+
+```tcl
+get_global_assignment -name FAMILY
+```
+
+Consultar el dispositivo:
+
+```tcl
+get_global_assignment -name DEVICE
+```
+
+Para establecer la FPGA de este template:
+
+```tcl
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE115F29C7
+export_assignments
+```
+
+Seleccionar el dispositivo no configura automáticamente los pines de la placa.
+
+### Definir la carpeta de resultados
+
+```tcl
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+export_assignments
+```
+
+Así, los resultados de compilación se guardan en `output_files/`, carpeta excluida del repositorio mediante `.gitignore`.
+
+### Guardar, cerrar y salir
+
+Al terminar de modificar el proyecto:
+
+```tcl
+export_assignments
+project_close
+exit
+```
+
+`export_assignments` guarda los ajustes en el `.qsf`, `project_close` cierra el proyecto y `exit` vuelve al terminal de PowerShell.
+
+Evita modificar simultáneamente los mismos ajustes desde la interfaz de Quartus, la consola Tcl y el editor del `.qsf`.
+
+### Compilar desde PowerShell
+
+Compilación completa:
+
+```powershell
+quartus_sh.exe --flow compile templatequartus
+```
+
+También puedes utilizar **Ctrl+Shift+B** desde VS Code.
+
+Para consultar el código de salida justo después de ejecutar el comando en PowerShell:
+
+```powershell
+$LASTEXITCODE
+```
+
+Un valor `0` indica que el proceso terminó correctamente. Revisa también los mensajes y advertencias de Quartus.
+
+### Ejecutar solamente análisis y síntesis
+
+Desde PowerShell:
+
+```powershell
+quartus_map.exe templatequartus
+```
+
+Es útil para detectar errores del código sin ejecutar todo el proceso de implementación.
+
+Este paso no comprueba el ajuste físico completo, no sustituye al análisis temporal final y no genera por sí solo un archivo listo para programar la FPGA.
+
+### Consultar la ayuda instalada
+
+Desde PowerShell:
+
+```powershell
+quartus_sh.exe --help
+quartus_sh.exe --help=flow
+quartus_map.exe --help
+```
+
+Desde la consola Tcl:
+
+```tcl
+project_open -long_help
+set_global_assignment -long_help
+get_global_assignment -long_help
+```
+
+La ayuda instalada corresponde a tu versión de Quartus y permite comprobar las opciones disponibles.
+
+### Automatizar cambios con un script Tcl
+
+Puedes guardar operaciones repetibles en un archivo, por ejemplo `scripts/configurar.tcl`:
+
+```tcl
+project_open templatequartus
+
+set_global_assignment -name TOP_LEVEL_ENTITY top
+set_global_assignment -name SYSTEMVERILOG_FILE top.sv
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+
+export_assignments
+project_close
+```
+
+Ejecútalo desde PowerShell, situado en la raíz del proyecto:
+
+```powershell
+quartus_sh.exe -t scripts/configurar.tcl
+```
+
+Puedes guardar estos scripts en Git junto con el proyecto.
+
+### Revisar cambios antes de subirlos
+
+Después de modificar la configuración, revisa lo que ha cambiado:
+
+```powershell
+git diff -- templatequartus.qsf
+git status
+```
+
+Comprueba que las rutas sean relativas y que no se hayan añadido resultados de compilación al repositorio.
+
+### Referencia
+
+Los comandos de configuración y la opción `-remove` están documentados en el [manual de scripting de Quartus](https://cdrdv2-public.intel.com/654662/tclscriptrefmnl.pdf). Consulta también `-long_help` en tu instalación de Quartus 17.1.
+
 ## Problemas frecuentes
 
 | Problema | Comprobación |
