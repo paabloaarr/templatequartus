@@ -33,7 +33,7 @@
       "id": "quartusProject",
       "type": "promptString",
       "description": "Nombre del proyecto Quartus, sin .qpf",
-      "default": "contador"
+      "default": "templatequartus"
     }
   ]
 }
