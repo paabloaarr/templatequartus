@@ -60,17 +60,18 @@ La tarea está definida en `.vscode/tasks.json`.
 
 1. Guarda todos los archivos.
 2. Pulsa **Ctrl+Shift+B**.
-3. Introduce el nombre del archivo `.qpf`, sin la extensión.
-4. Espera a que termine la compilación.
+3. Espera a que termine la compilación.
 
-Por ejemplo, si el archivo es `contador.qpf`, introduce `contador`.
+La tarea compila `templatequartus.qpf` desde la raíz del repositorio, aunque tengas abierto un archivo de Diseño o Verificación.
 
-Puedes cambiar el campo `default` de la entrada `quartusProject` en `tasks.json` para establecer el nombre sugerido.
+El QSF se guarda con codificación Windows-1252 para que Quartus 17.1 en Windows reconozca la `ñ` de `Diseño`. La configuración de VS Code asocia los archivos `.qsf` a Tcl y utiliza esa codificación para Tcl; los archivos SystemVerilog y Markdown utilizan UTF-8.
+
+Si renombras el proyecto, actualiza el argumento `templatequartus` de `args` en `.vscode/tasks.json`.
 
 La tarea ejecuta el equivalente a:
 
 ```powershell
-quartus_sh.exe --flow compile contador
+quartus_sh.exe --flow compile templatequartus
 ```
 
 La compilación correcta termina con un mensaje similar a:
@@ -90,7 +91,7 @@ Crear un archivo desde VS Code no lo añade automáticamente al proyecto de Quar
 Puedes añadirlo desde **Project → Add/Remove Files in Project** o incorporar una entrada en el `.qsf`:
 
 ```tcl
-set_global_assignment -name SYSTEMVERILOG_FILE rtl/nuevo_modulo.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Diseño/nuevo_modulo.sv
 ```
 
 Utiliza rutas relativas a la carpeta del proyecto. Si el diseño utiliza paquetes SystemVerilog, incluye sus archivos antes de los archivos que los importan.
@@ -138,6 +139,11 @@ Una compilación correcta no confirma por sí sola que las conexiones físicas o
 
 ## Archivos del repositorio
 
+- **Diseño/**: fuentes hardware, incluido el módulo principal top.sv.
+- **Verificación/**: testbenches, incluido top_tb.sv para comprobar el ejemplo de puerta AND.
+
+La tarea de Quartus sintetiza las fuentes registradas en el QSF. El testbench se ejecuta por separado en un simulador SystemVerilog; consulta el README de Verificación.
+
 Se conservan las fuentes, la configuración del proyecto, las restricciones, las entradas de memoria necesarias y la tarea de VS Code.
 
 Se excluyen las bases de datos de compilación, los resultados generados y las preferencias locales mediante `.gitignore`.
@@ -176,19 +182,19 @@ Los siguientes comandos de configuración requieren que el proyecto esté abiert
 Añadir un archivo SystemVerilog:
 
 ```tcl
-set_global_assignment -name SYSTEMVERILOG_FILE top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE {Diseño/top.sv}
 ```
 
 Añadir un archivo situado en una subcarpeta:
 
 ```tcl
-set_global_assignment -name SYSTEMVERILOG_FILE rtl/contador.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Diseño/contador.sv
 ```
 
 Añadir un archivo Verilog:
 
 ```tcl
-set_global_assignment -name VERILOG_FILE rtl/modulo.v
+set_global_assignment -name VERILOG_FILE Diseño/modulo.v
 ```
 
 Añadir un archivo de restricciones temporales:
@@ -202,7 +208,7 @@ Estos comandos registran archivos existentes; no crean su contenido ni sus carpe
 Utiliza rutas relativas y `/` como separador. Si la ruta contiene espacios, enciérrala entre llaves:
 
 ```tcl
-set_global_assignment -name SYSTEMVERILOG_FILE {rtl/mis modulos/contador.sv}
+set_global_assignment -name SYSTEMVERILOG_FILE {Diseño/mis modulos/contador.sv}
 ```
 
 Guarda los cambios:
@@ -216,7 +222,7 @@ export_assignments
 Para quitar un archivo concreto, utiliza `set_global_assignment` con la opción `-remove`:
 
 ```tcl
-set_global_assignment -remove -name SYSTEMVERILOG_FILE rtl/contador.sv
+set_global_assignment -remove -name SYSTEMVERILOG_FILE Diseño/contador.sv
 ```
 
 Para quitar un archivo de restricciones:
@@ -376,7 +382,7 @@ Puedes guardar operaciones repetibles en un archivo, por ejemplo `scripts/config
 project_open templatequartus
 
 set_global_assignment -name TOP_LEVEL_ENTITY top
-set_global_assignment -name SYSTEMVERILOG_FILE top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE {Diseño/top.sv}
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 
 export_assignments
@@ -411,7 +417,7 @@ Los comandos de configuración y la opción `-remove` están documentados en el 
 | Problema | Comprobación |
 |---|---|
 | No se encuentra `quartus_sh.exe` | Revisa el PATH y reinicia VS Code. |
-| No se encuentra el proyecto | Abre la carpeta del `.qpf` e introduce su nombre sin extensión. |
+| No se encuentra el proyecto | Abre la carpeta del `.qpf` y revisa el nombre del proyecto en `args` de la tarea. |
 | No se encuentra el módulo principal | Revisa `TOP_LEVEL_ENTITY`, el nombre del módulo y la inclusión de su archivo. |
 | Un archivo nuevo no se compila | Añádelo al proyecto mediante el `.qsf` o Quartus. |
 | Aparecen errores de SystemVerilog | Revisa el primer mensaje `Error (...)` del terminal. |
