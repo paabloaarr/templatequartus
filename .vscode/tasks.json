@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Quartus: compilar proyecto",
+      "type": "process",
+      "command": "quartus_sh",
+      "windows": {
+        "command": "quartus_sh.exe"
+      },
+      "args": [
+        "--flow",
+        "compile",
+        "${input:quartusProject}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "quartusProject",
+      "type": "promptString",
+      "description": "Nombre del proyecto Quartus, sin .qpf",
+      "default": "contador"
+    }
+  ]
+}

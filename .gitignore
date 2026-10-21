@@ -1,0 +1,18 @@
+# Bases de datos y archivos generados por Quartus
+db/
+incremental_db/
+output_files/
+work/
+
+# Preferencias locales de Quartus
+*.qws
+
+# Resultados de programación si se generan fuera de output_files/
+*.sof
+*.pof
+*.jic
+*.rbf
+
+# Archivos locales de Windows
+Thumbs.db
+Desktop.ini
