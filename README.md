@@ -76,9 +76,11 @@ Revisa las advertencias, especialmente las relacionadas con pines y restriccione
 
 ### Errores en el panel Problemas
 
-Las tareas de compilación y de análisis y síntesis envían al panel **Problemas** (**Ctrl+Shift+M**) los errores y advertencias de Quartus que indican archivo y línea. Al pulsar uno, VS Code abre el archivo en esa línea.
+Las tareas de compilación y de análisis y síntesis envían al panel **Problemas** (**Ctrl+Shift+M**) los errores y advertencias de Quartus. Al pulsar uno, VS Code abre el archivo en esa línea.
 
-Los mensajes sin archivo, como los de pines o del módulo principal, solo aparecen en el terminal.
+Los avisos del código aparecen en su archivo `.sv`. Los avisos del proyecto, como los de pines, restricciones temporales o licencia, no indican archivo y aparecen asociados a `templatequartus.qsf`.
+
+En Windows, las tareas ejecutan Quartus a través de `.vscode/quartus.ps1`. El script lee la salida de Quartus en Windows-1252, para que las rutas con `ñ` se vean bien y se puedan abrir, y añade `File: templatequartus.qsf Line: 1` a los avisos del proyecto.
 
 ### Programar la FPGA
 
@@ -96,7 +98,7 @@ El QSF se guarda con codificación Windows-1252 para que Quartus 17.1 en Windows
 
 ### Renombrar el proyecto
 
-Si renombras el proyecto, sustituye `templatequartus` en los `args` de las tres tareas de `.vscode/tasks.json`, incluida la ruta del `.sof`.
+Si renombras el proyecto, sustituye todas las apariciones de `templatequartus` en `.vscode/tasks.json`, incluida la ruta del `.sof`.
 
 ## Añadir archivos SystemVerilog
 

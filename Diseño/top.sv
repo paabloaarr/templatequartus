@@ -4,6 +4,6 @@ module top (
     output logic y
 );
 
-    assign y = a & b;
+    assign y d= a & b;
 
 endmodule

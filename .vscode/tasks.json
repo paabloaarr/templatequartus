@@ -5,14 +5,23 @@
       "label": "Quartus: compilar proyecto",
       "type": "process",
       "command": "quartus_sh",
-      "windows": {
-        "command": "quartus_sh.exe"
-      },
       "args": [
         "--flow",
         "compile",
         "templatequartus"
       ],
+      "windows": {
+        "command": "powershell.exe",
+        "args": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          ".vscode/quartus.ps1",
+          "compilar",
+          "templatequartus"
+        ]
+      },
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -58,12 +67,21 @@
       "label": "Quartus: análisis y síntesis",
       "type": "process",
       "command": "quartus_map",
-      "windows": {
-        "command": "quartus_map.exe"
-      },
       "args": [
         "templatequartus"
       ],
+      "windows": {
+        "command": "powershell.exe",
+        "args": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          ".vscode/quartus.ps1",
+          "sintesis",
+          "templatequartus"
+        ]
+      },
       "options": {
         "cwd": "${workspaceFolder}"
       },
