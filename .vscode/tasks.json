@@ -25,6 +25,106 @@
         "panel": "dedicated",
         "clear": true
       },
+      "problemMatcher": [
+        {
+          "owner": "quartus",
+          "source": "Quartus",
+          "fileLocation": ["autoDetect", "${workspaceFolder}"],
+          "severity": "error",
+          "pattern": {
+            "regexp": "^\\s*Error \\((\\d+)\\): (.*?) File: (.+?) Line: (\\d+)\\s*$",
+            "code": 1,
+            "message": 2,
+            "file": 3,
+            "line": 4
+          }
+        },
+        {
+          "owner": "quartus",
+          "source": "Quartus",
+          "fileLocation": ["autoDetect", "${workspaceFolder}"],
+          "severity": "warning",
+          "pattern": {
+            "regexp": "^\\s*(?:Critical )?Warning \\((\\d+)\\): (.*?) File: (.+?) Line: (\\d+)\\s*$",
+            "code": 1,
+            "message": 2,
+            "file": 3,
+            "line": 4
+          }
+        }
+      ]
+    },
+    {
+      "label": "Quartus: análisis y síntesis",
+      "type": "process",
+      "command": "quartus_map",
+      "windows": {
+        "command": "quartus_map.exe"
+      },
+      "args": [
+        "templatequartus"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": [
+        {
+          "owner": "quartus",
+          "source": "Quartus",
+          "fileLocation": ["autoDetect", "${workspaceFolder}"],
+          "severity": "error",
+          "pattern": {
+            "regexp": "^\\s*Error \\((\\d+)\\): (.*?) File: (.+?) Line: (\\d+)\\s*$",
+            "code": 1,
+            "message": 2,
+            "file": 3,
+            "line": 4
+          }
+        },
+        {
+          "owner": "quartus",
+          "source": "Quartus",
+          "fileLocation": ["autoDetect", "${workspaceFolder}"],
+          "severity": "warning",
+          "pattern": {
+            "regexp": "^\\s*(?:Critical )?Warning \\((\\d+)\\): (.*?) File: (.+?) Line: (\\d+)\\s*$",
+            "code": 1,
+            "message": 2,
+            "file": 3,
+            "line": 4
+          }
+        }
+      ]
+    },
+    {
+      "label": "Quartus: programar FPGA",
+      "type": "process",
+      "command": "quartus_pgm",
+      "windows": {
+        "command": "quartus_pgm.exe"
+      },
+      "args": [
+        "-c",
+        "1",
+        "-m",
+        "jtag",
+        "-o",
+        "p;output_files/templatequartus.sof"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
       "problemMatcher": []
     }
   ]

@@ -56,23 +56,15 @@ El nombre del repositorio puede ser diferente del nombre del proyecto de Quartus
 
 ## Compilar desde VS Code
 
-La tarea está definida en `.vscode/tasks.json`.
+Las tareas están definidas en `.vscode/tasks.json` y se ejecutan desde la raíz del repositorio, aunque tengas abierto un archivo de Diseño o Verificación.
 
-1. Guarda todos los archivos.
-2. Pulsa **Ctrl+Shift+B**.
-3. Espera a que termine la compilación.
+| Tarea | Cómo se lanza | Qué hace |
+|---|---|---|
+| **Quartus: compilar proyecto** | **Ctrl+Shift+B** | Compilación completa: síntesis, ajuste, análisis temporal y generación del `.sof`. |
+| **Quartus: análisis y síntesis** | **Terminal → Ejecutar tarea** | Solo análisis y síntesis. Es más rápida y basta para detectar errores del código. |
+| **Quartus: programar FPGA** | **Terminal → Ejecutar tarea** | Carga `output_files/templatequartus.sof` en la FPGA por JTAG. |
 
-La tarea compila `templatequartus.qpf` desde la raíz del repositorio, aunque tengas abierto un archivo de Diseño o Verificación.
-
-El QSF se guarda con codificación Windows-1252 para que Quartus 17.1 en Windows reconozca la `ñ` de `Diseño`. La configuración de VS Code asocia los archivos `.qsf` a Tcl y utiliza esa codificación para Tcl; los archivos SystemVerilog y Markdown utilizan UTF-8.
-
-Si renombras el proyecto, actualiza el argumento `templatequartus` de `args` en `.vscode/tasks.json`.
-
-La tarea ejecuta el equivalente a:
-
-```powershell
-quartus_sh.exe --flow compile templatequartus
-```
+Guarda todos los archivos antes de lanzar una tarea. Los comandos equivalentes están en [Compilar y programar desde PowerShell](#compilar-y-programar-desde-powershell).
 
 La compilación correcta termina con un mensaje similar a:
 
@@ -80,9 +72,31 @@ La compilación correcta termina con un mensaje similar a:
 Quartus Prime Full Compilation was successful. 0 errors, ... warnings
 ```
 
-Revisa las advertencias, especialmente las relacionadas con pines y restricciones temporales.
+Revisa las advertencias, especialmente las relacionadas con pines y restricciones temporales. Las tareas no ejecutan simulaciones.
 
-La tarea compila el proyecto completo. No ejecuta simulaciones ni programa la FPGA.
+### Errores en el panel Problemas
+
+Las tareas de compilación y de análisis y síntesis envían al panel **Problemas** (**Ctrl+Shift+M**) los errores y advertencias de Quartus que indican archivo y línea. Al pulsar uno, VS Code abre el archivo en esa línea.
+
+Los mensajes sin archivo, como los de pines o del módulo principal, solo aparecen en el terminal.
+
+### Programar la FPGA
+
+1. Compila el proyecto para generar `output_files/templatequartus.sof`.
+2. Conecta la placa por USB-Blaster y enciéndela.
+3. Ejecuta **Terminal → Ejecutar tarea → Quartus: programar FPGA**.
+
+La tarea usa el primer cable que detecta Quartus (`-c 1`). Si tienes varios conectados, consulta su número con `jtagconfig` y cambia ese valor en `args`.
+
+La configuración cargada por JTAG se pierde al apagar la placa.
+
+### Codificación del QSF
+
+El QSF se guarda con codificación Windows-1252 para que Quartus 17.1 en Windows reconozca la `ñ` de `Diseño`. La configuración de VS Code asocia los archivos `.qsf` a Tcl y utiliza esa codificación para Tcl; los archivos SystemVerilog y Markdown utilizan UTF-8.
+
+### Renombrar el proyecto
+
+Si renombras el proyecto, sustituye `templatequartus` en los `args` de las tres tareas de `.vscode/tasks.json`, incluida la ruta del `.sof`.
 
 ## Añadir archivos SystemVerilog
 
@@ -96,6 +110,8 @@ set_global_assignment -name SYSTEMVERILOG_FILE Diseño/nuevo_modulo.sv
 
 Utiliza rutas relativas a la carpeta del proyecto. Si el diseño utiliza paquetes SystemVerilog, incluye sus archivos antes de los archivos que los importan.
 
+También puedes hacerlo desde la consola Tcl; consulta [Añadir archivos al proyecto](#añadir-archivos-al-proyecto).
+
 Los testbenches se mantienen como fuentes de simulación; no los añadas como parte del diseño que quieres sintetizar.
 
 ## Seleccionar el módulo principal
@@ -106,25 +122,18 @@ El `.qsf` contiene la selección del top-level:
 set_global_assignment -name TOP_LEVEL_ENTITY top
 ```
 
-`top` debe coincidir con el nombre declarado en `module top`, no necesariamente con el nombre del archivo.
+`top` debe coincidir con el nombre declarado en el código, no necesariamente con el nombre del archivo:
 
-Para cambiarlo desde el terminal, abre la consola Tcl:
-
-```powershell
-quartus_sh.exe -s
+```systemverilog
+module top (
+    input  logic a,
+    output logic y
+);
+    assign y = a;
+endmodule
 ```
 
-Después ejecuta estas instrucciones, sustituyendo `contador` por el nombre del proyecto y `top` por el módulo deseado:
-
-```tcl
-project_open contador
-set_global_assignment -name TOP_LEVEL_ENTITY top
-export_assignments
-project_close
-exit
-```
-
-Comprueba que el cambio aparece en el `.qsf`.
+Para cambiarlo desde la consola Tcl, consulta [Consultar y cambiar el módulo principal](#consultar-y-cambiar-el-módulo-principal).
 
 ## Pines y restricciones temporales
 
@@ -144,7 +153,7 @@ Una compilación correcta no confirma por sí sola que las conexiones físicas o
 
 La tarea de Quartus sintetiza las fuentes registradas en el QSF. El testbench se ejecuta por separado en un simulador SystemVerilog; consulta el README de Verificación.
 
-Se conservan las fuentes, la configuración del proyecto, las restricciones, las entradas de memoria necesarias y la tarea de VS Code.
+Se conservan las fuentes, la configuración del proyecto, las restricciones, las entradas de memoria necesarias y las tareas de VS Code.
 
 Se excluyen las bases de datos de compilación, los resultados generados y las preferencias locales mediante `.gitignore`.
 
@@ -180,12 +189,6 @@ Los siguientes comandos de configuración requieren que el proyecto esté abiert
 ### Añadir archivos al proyecto
 
 Añadir un archivo SystemVerilog:
-
-```tcl
-set_global_assignment -name SYSTEMVERILOG_FILE {Diseño/top.sv}
-```
-
-Añadir un archivo situado en una subcarpeta:
 
 ```tcl
 set_global_assignment -name SYSTEMVERILOG_FILE Diseño/contador.sv
@@ -259,22 +262,11 @@ Consultar el top-level:
 get_global_assignment -name TOP_LEVEL_ENTITY
 ```
 
-Cambiarlo:
+Cambiarlo, sustituyendo `top` por el nombre del módulo declarado en el código:
 
 ```tcl
 set_global_assignment -name TOP_LEVEL_ENTITY top
 export_assignments
-```
-
-`top` debe coincidir con el nombre declarado en el código:
-
-```systemverilog
-module top (
-    input  logic a,
-    output logic y
-);
-    assign y = a;
-endmodule
 ```
 
 ### Consultar la FPGA configurada
@@ -324,35 +316,39 @@ exit
 
 Evita modificar simultáneamente los mismos ajustes desde la interfaz de Quartus, la consola Tcl y el editor del `.qsf`.
 
-### Compilar desde PowerShell
+### Compilar y programar desde PowerShell
 
-Compilación completa:
+Cada comando equivale a una de las tareas de VS Code.
+
+Compilación completa (**Quartus: compilar proyecto**):
 
 ```powershell
 quartus_sh.exe --flow compile templatequartus
 ```
 
-También puedes utilizar **Ctrl+Shift+B** desde VS Code.
+Solo análisis y síntesis (**Quartus: análisis y síntesis**):
 
-Para consultar el código de salida justo después de ejecutar el comando en PowerShell:
+```powershell
+quartus_map.exe templatequartus
+```
+
+Este paso detecta errores del código sin ejecutar todo el proceso de implementación. No comprueba el ajuste físico completo, no sustituye al análisis temporal final y no genera el `.sof` para programar la FPGA.
+
+Programar la FPGA (**Quartus: programar FPGA**):
+
+```powershell
+quartus_pgm.exe -c 1 -m jtag -o "p;output_files/templatequartus.sof"
+```
+
+Las comillas son necesarias para que PowerShell no interprete `;` como separador de comandos.
+
+Para consultar el código de salida justo después de ejecutar un comando:
 
 ```powershell
 $LASTEXITCODE
 ```
 
 Un valor `0` indica que el proceso terminó correctamente. Revisa también los mensajes y advertencias de Quartus.
-
-### Ejecutar solamente análisis y síntesis
-
-Desde PowerShell:
-
-```powershell
-quartus_map.exe templatequartus
-```
-
-Es útil para detectar errores del código sin ejecutar todo el proceso de implementación.
-
-Este paso no comprueba el ajuste físico completo, no sustituye al análisis temporal final y no genera por sí solo un archivo listo para programar la FPGA.
 
 ### Consultar la ayuda instalada
 
@@ -362,6 +358,7 @@ Desde PowerShell:
 quartus_sh.exe --help
 quartus_sh.exe --help=flow
 quartus_map.exe --help
+quartus_pgm.exe --help
 ```
 
 Desde la consola Tcl:
@@ -417,9 +414,11 @@ Los comandos de configuración y la opción `-remove` están documentados en el 
 | Problema | Comprobación |
 |---|---|
 | No se encuentra `quartus_sh.exe` | Revisa el PATH y reinicia VS Code. |
-| No se encuentra el proyecto | Abre la carpeta del `.qpf` y revisa el nombre del proyecto en `args` de la tarea. |
+| No se encuentra el proyecto | Abre la carpeta del `.qpf` y revisa el nombre del proyecto en `args` de las tareas. |
 | No se encuentra el módulo principal | Revisa `TOP_LEVEL_ENTITY`, el nombre del módulo y la inclusión de su archivo. |
 | Un archivo nuevo no se compila | Añádelo al proyecto mediante el `.qsf` o Quartus. |
-| Aparecen errores de SystemVerilog | Revisa el primer mensaje `Error (...)` del terminal. |
+| `Warning (12019): Can't analyze file -- file DiseÃ±o/... is missing` | La ruta se guardó en UTF-8 en el `.qsf`. Borra esa línea y vuelve a añadir el archivo desde Quartus o desde VS Code, que guarda el `.qsf` en Windows-1252. |
+| Aparecen errores de SystemVerilog | Revisa el panel **Problemas** o el primer mensaje `Error (...)` del terminal. |
+| La tarea de programar no encuentra el cable | Comprueba la conexión, el driver del USB-Blaster y el número del cable con `jtagconfig`. |
 
 Para comprobar que el template es reproducible, clónalo en otra carpeta y compílalo siguiendo estas instrucciones.
